@@ -54,7 +54,11 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                         subjectId: subject.id,
                         score: score,
                         title: title,
-                        content: content
+                        content: content,
+                        like: 1,
+                        likes: {
+                            connect: { id: interaction.user.id }
+                        }
                     }
                 })
             })
