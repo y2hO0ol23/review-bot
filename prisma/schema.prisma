@@ -1,0 +1,38 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id
+
+  reviewsRecived  Review[]  @relation("recived")
+  reviewsGiven    Review[]  @relation("given")
+  reviewsLike     Review[]  @relation("like")
+}
+
+model Review {
+  id        Int       @id @default(autoincrement())
+
+  score     Float
+  title     String
+  content   String
+
+  subjectId String
+  subject   User      @relation("recived", fields: [subjectId], references: [id])
+
+  authorId  String
+  author    User      @relation("given", fields: [authorId], references: [id])
+  
+  like      Int       @default(0)
+  likes     User[]    @relation("like")
+
+  TimeStamp DateTime  @default(now())
+}
