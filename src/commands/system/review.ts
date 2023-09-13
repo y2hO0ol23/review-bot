@@ -22,7 +22,7 @@ export default {
 
         const modal = new ModalBuilder()
 			.setCustomId(`review#${subject.id}`)
-			.setTitle(`Review ${subject.displayName}`)
+			.setTitle(`Review ${subject.username}`)
 
         const score = new TextInputBuilder()
 			.setCustomId('score')
@@ -60,7 +60,7 @@ export default {
                 })
                 .then(data => {
                     if (data.length) {
-                        modal.setTitle(`Edit ${subject.displayName}`);
+                        modal.setTitle(`Edit ${subject.username}`);
                         score.setValue("★".repeat(data[0].score));
                         title.setValue(data[0].title);
                         content.setValue(data[0].content);

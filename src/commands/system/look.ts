@@ -73,7 +73,7 @@ export default {
 
                         options.push(
                             new StringSelectMenuOptionBuilder()
-                                .setLabel(`${e.title} [${score_ui(e.score)}] - ${author ? author.displayName : "unknown"}`)
+                                .setLabel(`${e.title} [${score_ui(e.score)}] - ${author ? author.username : "unknown"}`)
                                 .setDescription(`👍 ${e.like}`)
                                 .setValue(`${e.id}`)
                         )
@@ -81,7 +81,7 @@ export default {
                     
                     const menu = new StringSelectMenuBuilder()
                         .setCustomId(`review`)
-                        .setPlaceholder(`List for ${subject.displayName}`)
+                        .setPlaceholder(`List for ${subject.username}`)
                         .addOptions(options);
 
                     await interaction.reply({
