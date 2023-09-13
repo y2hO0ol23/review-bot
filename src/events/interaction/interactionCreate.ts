@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Embed, EmbedBuilder, Interaction, User } from "discord.js";
 import { client, prisma } from "../../index";
-import { review_ui } from "../../utils/ui";
+import { like_button, review_ui } from "../../utils/ui";
 
 client.on("interactionCreate", async (interaction: Interaction): Promise<any> => {
     if (!interaction.inCachedGuild()) return;
@@ -62,7 +62,10 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                     }
                 })
                 .then(async data => {
-                    await interaction.editReply({ embeds: [await review_ui(data.id)] });
+                    await interaction.editReply({ 
+                        embeds: [await review_ui(data.id)],
+                        components: [like_button(data.id)]
+                    });
                 })
                 .catch(err => console.log(err));
             })
@@ -125,13 +128,8 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
 
             if (!embed.data.footer) return;
 
-            const like = new ButtonBuilder()
-                .setCustomId(`like#${id}`)
-                .setLabel('👍')
-                .setStyle(ButtonStyle.Secondary);
-            
             await interaction.editReply({
-                components: [new ActionRowBuilder<ButtonBuilder>().addComponents(like)]
+                components: [like_button(id)]
             });
         }
     }

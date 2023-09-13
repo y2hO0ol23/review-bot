@@ -1,4 +1,4 @@
-import { EmbedBuilder } from "discord.js";
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from "discord.js";
 import { client, prisma } from "..";
 
 export function score_ui(score: number): string {
@@ -40,4 +40,13 @@ export async function review_ui(id?: number) {
     .catch(err => console.log(err));
 
     return embed;
+}
+
+export function like_button(id: number) {
+    const like = new ButtonBuilder()
+        .setCustomId(`like#${id}`)
+        .setLabel('👍')
+        .setStyle(ButtonStyle.Secondary);
+    
+    return new ActionRowBuilder<ButtonBuilder>().addComponents(like);
 }
