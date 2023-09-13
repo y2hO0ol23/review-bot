@@ -61,10 +61,12 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                         }
                     }
                 })
+                .then(async data => {
+                    await interaction.editReply({ embeds: [await review_ui(data.id)] });
+                })
+                .catch(err => console.log(err));
             })
             .catch(err => console.log(err));
-            
-            await interaction.editReply({ content: '`Review has sent`' });
         }
     }
     if (interaction.isButton()) {

@@ -12,7 +12,7 @@ export default {
                 .setDescription('Select subject')
                 .setRequired(true)),
 
-    execute: async function ({ client, interaction }: { client: Client, interaction: CommandInteraction }) {
+    execute: async function ({ interaction }: { interaction: CommandInteraction }) {
         if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
 
         const subject = interaction.options.getUser('subject') as User;
