@@ -31,7 +31,8 @@ export async function review_ui(id?: number) {
                     value: `\`\`\`${data.content}\`\`\``,
                 }
             ])
-            .setFooter({ text: `👍 ${data.like}` });
+            .setFooter({ text: `👍 ${data.like}` })
+            .setTimestamp(data.TimeStamp);
 
             const subject = await client.users.fetch(data.subjectId);
             if (subject) embed.setThumbnail(subject.displayAvatarURL());

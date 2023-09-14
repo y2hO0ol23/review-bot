@@ -49,6 +49,10 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                                         
                         await (channel as TextBasedChannel).messages.fetch(messageId)
                         .then(async msg => { await msg.delete(); }).catch(()=>{});
+                        
+                        await prisma.review.delete({
+                            where: { id: data[0].id }
+                        });
                     }
                 })
                 await prisma.review.create({
