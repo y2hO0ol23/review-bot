@@ -16,6 +16,7 @@ model User {
   reviewsRecived  Review[]  @relation("recived")
   reviewsGiven    Review[]  @relation("given")
   reviewsLike     Review[]  @relation("like")
+  reviewsHate     Review[]  @relation("hate")
 }
 
 model Review {
@@ -34,6 +35,7 @@ model Review {
   
   like        Int       @default(0)
   likes       User[]    @relation("like")
+  hates       User[]    @relation("hate")
 
   TimeStamp   DateTime  @default(now())
 }

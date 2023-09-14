@@ -1,6 +1,7 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, Embed, EmbedBuilder, Interaction, User } from "discord.js";
+import { Interaction, User } from "discord.js";
 import { client, prisma } from "../../index";
 import { like_button, review_ui } from "../../utils/ui";
+import { create_user_when_not_exist } from "../../utils/prisma";
 
 client.on("interactionCreate", async (interaction: Interaction): Promise<any> => {
     if (!interaction.inCachedGuild()) return;
@@ -87,34 +88,84 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
 
             await prisma.review.findUnique({
                 where: { id: id },
-                include: { likes: true }
+                include: { likes: true, hates: true }
             })
             .then(async data => {
                 if (data) {
                     if (data.likes.find(data => data.id == interaction.user.id)) {
-                        return interaction.followUp({ content: '`You already likes it`' })
+                        return interaction.followUp({ content: `\`You already likes it\`` });
                     }
                     else {
-                        await prisma.user.findUnique({
-                            where: { id: interaction.user.id }
-                        })
-                        .then(async data => {
-                            if (data) return;       
-                            await prisma.user.create({
-                                data: { id: interaction.user.id }
-                            })
-                        })
-                        .catch(err => console.log(err));
+                        await create_user_when_not_exist(interaction.user.id);
 
-                        await prisma.review.update({
-                            where: { id: data.id },
-                            data: { 
-                                like: { increment: 1 },
-                                likes: {
-                                    connect: { id: interaction.user.id }
+                        if (data.hates.find(data => data.id == interaction.user.id)) {
+                            await prisma.review.update({
+                                where: { id: data.id },
+                                data: { 
+                                    like: { increment: 2 },
+                                    likes: { connect: { id: interaction.user.id } },
+                                    hates: { disconnect: { id: interaction.user.id } }
                                 }
-                            }
-                        });
+                            });
+                        }
+                        else {
+                            await prisma.review.update({
+                                where: { id: data.id },
+                                data: { 
+                                    like: { increment: 1 },
+                                    likes: {
+                                        connect: { id: interaction.user.id }
+                                    }
+                                }
+                            });
+                        }
+                            
+                        await interaction.message.edit({ embeds: [await review_ui(data.id)] });
+                    }
+                }
+                else {
+                    await interaction.message.edit({ embeds: [await review_ui()], components: [] });
+                }
+                await interaction.deleteReply();
+            })
+            .catch(err => console.log(err));
+        }
+        if (interaction.customId.startsWith('hate')) {
+            await interaction.deferReply({ ephemeral: true });
+
+            const id = parseInt(interaction.customId.split('#')[1]);
+
+            await prisma.review.findUnique({
+                where: { id: id },
+                include: { likes: true, hates: true }
+            })
+            .then(async data => {
+                if (data) {
+                    if (data.hates.find(data => data.id == interaction.user.id)) {
+                        return interaction.followUp({ content: `\`You already hatess it\`` });
+                    }
+                    else {
+                        await create_user_when_not_exist(interaction.user.id);
+
+                        if (data.likes.find(data => data.id == interaction.user.id)) {
+                            await prisma.review.update({
+                                where: { id: data.id },
+                                data: { 
+                                    like: { decrement: 2 },
+                                    hates: { connect: { id: interaction.user.id } },
+                                    likes: { disconnect: { id: interaction.user.id } }
+                                }
+                            });
+                        }
+                        else {
+                            await prisma.review.update({
+                                where: { id: data.id },
+                                data: { 
+                                    like: { decrement: 1 },
+                                    hates: { connect: { id: interaction.user.id }}
+                                }
+                            });
+                        }
                             
                         await interaction.message.edit({ embeds: [await review_ui(data.id)] });
                     }

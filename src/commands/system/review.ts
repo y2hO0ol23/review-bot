@@ -1,4 +1,4 @@
-import { CommandInteraction, SlashCommandBuilder, Client, User } from "discord.js"
+import { CommandInteraction, SlashCommandBuilder, User } from "discord.js"
 import { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } from "discord.js";
 import { prisma } from "../..";
 

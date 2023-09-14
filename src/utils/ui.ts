@@ -48,5 +48,10 @@ export function like_button(id: number) {
         .setLabel('👍')
         .setStyle(ButtonStyle.Secondary);
     
-    return new ActionRowBuilder<ButtonBuilder>().addComponents(like);
+    const hate = new ButtonBuilder()
+        .setCustomId(`hate#${id}`)
+        .setLabel('👎')
+        .setStyle(ButtonStyle.Secondary);
+    
+    return new ActionRowBuilder<ButtonBuilder>().addComponents(like, hate);
 }

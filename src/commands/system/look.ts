@@ -1,4 +1,4 @@
-import { CommandInteraction, SlashCommandBuilder, User, EmbedBuilder, ActionRowBuilder, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, TextBasedChannel, Message } from "discord.js"
+import { CommandInteraction, SlashCommandBuilder, User, EmbedBuilder, ActionRowBuilder, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, TextBasedChannel } from "discord.js"
 import { prisma, client } from "../..";
 import { score_ui, count_ui, review_ui, like_button } from "../../utils/ui";
 
