@@ -19,20 +19,21 @@ model User {
 }
 
 model Review {
-  id        Int       @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
+  messageLink String
 
-  score     Float
-  title     String
-  content   String
+  score       Float
+  title       String
+  content     String
 
-  subjectId String
-  subject   User      @relation("recived", fields: [subjectId], references: [id])
+  subjectId   String
+  subject     User      @relation("recived", fields: [subjectId], references: [id])
 
-  authorId  String
-  author    User      @relation("given", fields: [authorId], references: [id])
+  authorId    String
+  author      User      @relation("given", fields: [authorId], references: [id])
   
-  like      Int       @default(0)
-  likes     User[]    @relation("like")
+  like        Int       @default(0)
+  likes       User[]    @relation("like")
 
-  TimeStamp DateTime  @default(now())
+  TimeStamp   DateTime  @default(now())
 }

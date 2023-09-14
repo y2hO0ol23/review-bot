@@ -1,6 +1,6 @@
-import { CommandInteraction, SlashCommandBuilder, User, EmbedBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, StringSelectMenuOptionBuilder, StringSelectMenuBuilder } from "discord.js"
+import { CommandInteraction, SlashCommandBuilder, User, EmbedBuilder, ActionRowBuilder, StringSelectMenuOptionBuilder, StringSelectMenuBuilder, TextBasedChannel, Message } from "discord.js"
 import { prisma, client } from "../..";
-import { score_ui, count_ui, review_ui } from "../../utils/ui";
+import { score_ui, count_ui, review_ui, like_button } from "../../utils/ui";
 
 export default {
     data: new SlashCommandBuilder()
@@ -42,13 +42,13 @@ export default {
                 const embed = new EmbedBuilder()
                     .setColor(0x111111)
                     .setTitle(`${score_ui(average)} ${average.toFixed(1)} (${count_ui(data.length)})`)
-                    .setDescription(`About <@${subject.id}>`)
+                    .setDescription(`➥ <@${subject.id}>`)
                     .setThumbnail(subject.displayAvatarURL());
 
                 if (data.length) {
                     embed.addFields([
                         {
-                            name: `Best review : ${data[0].title} [${score_ui(data[0].score)}]`,
+                            name: `Best Review: ${data[0].title} [${score_ui(data[0].score)}]`,
                             value: `\`\`\`${data[0].content}\`\`\``,
                         }
                     ])
@@ -86,8 +86,57 @@ export default {
 
                     await interaction.reply({
                         ephemeral: true,
-                        components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu)]
-                    });
+                        components: [new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(menu)],
+                        flags: "Ephemeral"
+                    })
+                    .then(msg => {
+                        msg.createMessageComponentCollector().on('collect', async component => {
+                            if (component.isStringSelectMenu()) {
+                                const id = parseInt(component.values[0]);
+
+                                await prisma.review.findUnique({
+                                    where: { id: id }
+                                })
+                                .then(async data => {
+                                    if (data) {
+                                        var [guildId, channelId, messageId] = data.messageLink.split('/');
+                                        var channel = await client.channels.fetch(channelId);
+                                        
+                                        await (channel as TextBasedChannel).messages.fetch(messageId)
+                                        .then(async () => {
+                                            // if message exist
+                                            const embed = new EmbedBuilder()
+                                                .setColor(0x111111)
+                                                .setFields([
+                                                    {
+                                                        name: `📝 ${data.title} [${score_ui(data.score)}]`,
+                                                        value: `➥ https://discord.com/channels/${guildId}/${channelId}/${messageId}`,
+                                                    }
+                                                ]);
+    
+                                            await interaction.editReply({ embeds: [embed], content: '', components: [] });
+                                        }).catch(async () => {
+                                            // if message not exist
+                                            if (interaction.channel) {
+                                                const message = await interaction.channel.send({ embeds: [await review_ui(id)], components: [like_button(id)] });
+    
+                                                guildId = message.guildId as string;
+                                                channelId = message.channelId as string;
+                                                messageId = message.id as string;
+    
+                                                await prisma.review.update({
+                                                    where: { id: id },
+                                                    data: { messageLink: `${guildId}/${channelId}/${messageId}` }
+                                                });
+                                                
+                                                await interaction.deleteReply();
+                                            }
+                                        });
+                                    }
+                                });
+                            }
+                        });
+                    })
                 }
                 else {
                     await interaction.reply({ 

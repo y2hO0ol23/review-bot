@@ -25,13 +25,13 @@ export async function review_ui(id?: number) {
     .then(async data => {
         if (data) {
             embed.setDescription(`<@${data.authorId}> → <@${data.subjectId}>`)
-            .addFields([
+            .setFields([
                 {
                     name: `📝 ${data.title} [${score_ui(data.score)}]`,
                     value: `\`\`\`${data.content}\`\`\``,
                 }
             ])
-            .setFooter({ text: `👍 ${data.like}` })
+            .setFooter({ text: `👍 ${data.like}` });
 
             const subject = await client.users.fetch(data.subjectId);
             if (subject) embed.setThumbnail(subject.displayAvatarURL());

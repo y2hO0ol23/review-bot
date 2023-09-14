@@ -17,7 +17,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
     
     if (interaction.isModalSubmit()) {
         if (interaction.customId.startsWith('review')) {
-            await interaction.deferReply();
+            const msg = await interaction.deferReply();
             const subject: User = await client.users.fetch(interaction.customId.split('#')[1]) as User;
             
             const score: number = Math.max(interaction.fields.getTextInputValue('score').lastIndexOf('★') + 1, 1);
@@ -50,6 +50,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                 });
                 await prisma.review.create({
                     data: {
+                        messageLink: `${interaction.guildId}/${interaction.channelId}/${msg.id}`,
                         authorId: interaction.user.id,
                         subjectId: subject.id,
                         score: score,
@@ -65,6 +66,12 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                     await interaction.editReply({ 
                         embeds: [await review_ui(data.id)],
                         components: [like_button(data.id)],
+                    })
+                    .then(async msg => {
+                        await prisma.review.update({
+                            where: { id: data.id },
+                            data: { messageLink: `${interaction.guildId}/${interaction.channelId}/${msg.id}`}
+                        });
                     });
                 })
                 .catch(err => console.log(err));
@@ -118,19 +125,6 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                 await interaction.deleteReply();
             })
             .catch(err => console.log(err));
-        }
-    }
-    if (interaction.isStringSelectMenu()) {
-        if (interaction.customId == 'review') {
-            const id = parseInt(interaction.values[0]);
-            const embed = await review_ui(id);
-            await interaction.reply({ embeds: [embed] });
-
-            if (!embed.data.footer) return;
-
-            await interaction.editReply({
-                components: [like_button(id)]
-            });
         }
     }
 });
