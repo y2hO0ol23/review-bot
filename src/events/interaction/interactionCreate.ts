@@ -1,4 +1,4 @@
-import { Interaction, User } from "discord.js";
+import { Interaction, TextBasedChannel, User } from "discord.js";
 import { client, prisma } from "../../index";
 import { like_button, review_ui } from "../../utils/ui";
 import { create_user_when_not_exist } from "../../utils/prisma";
@@ -25,14 +25,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
             const title: string = interaction.fields.getTextInputValue('title');
             const content: string = interaction.fields.getTextInputValue('content');
             
-            if (await prisma.user.findUnique({
-                where: { id: interaction.user.id }
-            })) {/* exist */}
-            else {
-                await prisma.user.create({
-                    data: { id: interaction.user.id }
-                });
-            }
+            await create_user_when_not_exist(interaction.user.id);
 
             await prisma.user.findUnique({
                 where: { id: subject.id }
@@ -43,12 +36,21 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                         data: { id: subject.id }
                     });
                 }
-                await prisma.review.deleteMany({
+                await prisma.review.findMany({
                     where: {
                         authorId: interaction.user.id,
                         subjectId: subject.id
                     }
-                });
+                })
+                .then(async data => {
+                    if (data.length) {
+                        var [_, channelId, messageId] = data[0].messageLink.split('/');
+                        var channel = await client.channels.fetch(channelId);
+                                        
+                        await (channel as TextBasedChannel).messages.fetch(messageId)
+                        .then(async msg => { await msg.delete(); }).catch(()=>{});
+                    }
+                })
                 await prisma.review.create({
                     data: {
                         messageLink: `${interaction.guildId}/${interaction.channelId}/${msg.id}`,
