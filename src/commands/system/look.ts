@@ -81,7 +81,7 @@ export default {
                     
                     const menu = new StringSelectMenuBuilder()
                         .setCustomId(`review`)
-                        .setPlaceholder(`List for ${subject.username}`)
+                        .setPlaceholder(`List for: ${subject.username}`)
                         .addOptions(options);
 
                     await interaction.reply({

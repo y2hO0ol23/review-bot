@@ -45,14 +45,16 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                 .then(async data => {
                     if (data.length) {
                         var [_, channelId, messageId] = data[0].messageLink.split('/');
-                        var channel = await client.channels.fetch(channelId);
-                                        
-                        await (channel as TextBasedChannel).messages.fetch(messageId)
-                        .then(async msg => { await msg.delete(); }).catch(()=>{});
-                        
-                        await prisma.review.delete({
-                            where: { id: data[0].id }
-                        });
+                        await client.channels.fetch(channelId)
+                        .then(async channel => {       
+                            await (channel as TextBasedChannel).messages.fetch(messageId)
+                            .then(async msg => { await msg.delete(); }).catch(()=>{});
+                            
+                            await prisma.review.delete({
+                                where: { id: data[0].id }
+                            });
+                        })
+                        .catch(()=>{});
                     }
                 })
                 await prisma.review.create({
@@ -88,8 +90,6 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
     }
     if (interaction.isButton()) {
         if (interaction.customId.startsWith('like')) {
-            await interaction.deferReply({ ephemeral: true });
-
             const id = parseInt(interaction.customId.split('#')[1]);
 
             await prisma.review.findUnique({
@@ -98,10 +98,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
             })
             .then(async data => {
                 if (data) {
-                    if (data.likes.find(data => data.id == interaction.user.id)) {
-                        return interaction.followUp({ content: `\`You already likes it\`` });
-                    }
-                    else {
+                    if (!data.likes.find(data => data.id == interaction.user.id)) {
                         await create_user_when_not_exist(interaction.user.id);
 
                         if (data.hates.find(data => data.id == interaction.user.id)) {
@@ -132,13 +129,11 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                 else {
                     await interaction.message.edit({ embeds: [await review_ui()], components: [] });
                 }
-                await interaction.deleteReply();
+                await interaction.deferUpdate();
             })
             .catch(err => console.log(err));
         }
         if (interaction.customId.startsWith('hate')) {
-            await interaction.deferReply({ ephemeral: true });
-
             const id = parseInt(interaction.customId.split('#')[1]);
 
             await prisma.review.findUnique({
@@ -147,10 +142,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
             })
             .then(async data => {
                 if (data) {
-                    if (data.hates.find(data => data.id == interaction.user.id)) {
-                        return interaction.followUp({ content: `\`You already hates it\`` });
-                    }
-                    else {
+                    if (!data.hates.find(data => data.id == interaction.user.id)) {
                         await create_user_when_not_exist(interaction.user.id);
 
                         if (data.likes.find(data => data.id == interaction.user.id)) {
@@ -179,7 +171,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                 else {
                     await interaction.message.edit({ embeds: [await review_ui()], components: [] });
                 }
-                await interaction.deleteReply();
+                await interaction.deferUpdate();
             })
             .catch(err => console.log(err));
         }
