@@ -5,26 +5,30 @@ import { score_ui, count_ui, review_ui, like_button } from "../../utils/ui";
 export default {
     data: new SlashCommandBuilder()
         .setName("look")
-        .setDescription("look for ...")
+        .setDescription('look about ...')
         .setDMPermission(false)
-        .addUserOption(option =>
-            option.setName('subject')
-                .setDescription('Select subject')
-                .setRequired(true))
-        .addStringOption(option =>
-            option.setName('about')
-                .setDescription('Select what you want to look at')
-                .setRequired(true)
-                .addChoices(
-                    { name: 'info', value: 'info' },
-                    { name: 'review', value: 'review' },
-                )),
+        .addSubcommand(subcommand =>
+            subcommand
+            .setName('info')
+            .setDescription('look about user info')
+            .addUserOption(option =>
+                option.setName('subject')
+                    .setDescription('Select subject')
+                    .setRequired(true)))
+        .addSubcommand(subcommand =>
+            subcommand
+            .setName('review')
+            .setDescription('look about review')
+            .addUserOption(option =>
+                option.setName('subject')
+                    .setDescription('Select subject')
+                    .setRequired(true))),
 
     execute: async function ({ interaction }: { interaction: CommandInteraction }) {
         if (!interaction.isChatInputCommand() || !interaction.inCachedGuild()) return;
 
         const subject = interaction.options.getUser('subject') as User;
-        const about = interaction.options.getString('about') as string;
+        const about = interaction.options.getSubcommand() as string;
         
         if (about == 'info') {
             await prisma.review.findMany({
@@ -41,14 +45,13 @@ export default {
                 
                 const embed = new EmbedBuilder()
                     .setColor(0x111111)
-                    .setTitle(`${score_ui(average)} ${average.toFixed(1)} (${count_ui(data.length)})`)
-                    .setDescription(`➥ <@${subject.id}>`)
+                    .setDescription(`<@${subject.id}> **⭐${average.toFixed(1)} (${count_ui(data.length)})**`)
                     .setThumbnail(subject.displayAvatarURL());
 
                 if (data.length) {
                     embed.addFields([
                         {
-                            name: `Best Review: ${data[0].title} [${score_ui(data[0].score)}]`,
+                            name: `📑 ${data[0].title} 〔${score_ui(data[0].score)}〕`,
                             value: `\`\`\`${data[0].content}\`\`\``,
                         }
                     ])
@@ -69,19 +72,21 @@ export default {
                     const options: StringSelectMenuOptionBuilder[] = []
 
                     for (var e of data) {
-                        const author = await client.users.fetch(e.authorId);
-
-                        options.push(
-                            new StringSelectMenuOptionBuilder()
-                                .setLabel(`${e.title} [${score_ui(e.score)}] - ${author ? author.username : "unknown"}`)
-                                .setDescription(`👍 ${e.like}`)
-                                .setValue(`${e.id}`)
-                        )
+                        if (e.messageLink) {
+                            const author = await client.users.fetch(e.authorId);
+    
+                            options.push(
+                                new StringSelectMenuOptionBuilder()
+                                    .setLabel(`${e.title} 〔${score_ui(e.score)}〕 - ${author ? author.username : "unknown"}`)
+                                    .setDescription(`👍 ${e.like}`)
+                                    .setValue(`${e.id}`)
+                            )
+                        }
                     }
                     
                     const menu = new StringSelectMenuBuilder()
                         .setCustomId(`review`)
-                        .setPlaceholder(`List for: ${subject.username}`)
+                        .setPlaceholder(`List about: ${subject.username}`)
                         .addOptions(options);
 
                     await interaction.reply({
@@ -98,8 +103,8 @@ export default {
                                     where: { id: id }
                                 })
                                 .then(async data => {
-                                    if (data) {
-                                        var [guildId, channelId, messageId] = data.messageLink.split('/');
+                                    if (data?.messageLink) {
+                                        var [_, channelId, messageId] = data.messageLink.split('/');
                                         await client.channels.fetch(channelId)
                                         .then(async channel => {
                                             await (channel as TextBasedChannel).messages.fetch(messageId)
@@ -109,12 +114,11 @@ export default {
                                                     .setColor(0x111111)
                                                     .setFields([
                                                         {
-                                                            name: `📝 ${data.title} [${score_ui(data.score)}]`,
-                                                            value: `➥ https://discord.com/channels/${guildId}/${channelId}/${messageId}`,
+                                                            name: `📝 ${data.title} 〔${score_ui(data.score)}〕`,
+                                                            value: `➥ https://discord.com/channels/${data.messageLink}`,
                                                         }
                                                     ]);
-        
-                                                await interaction.editReply({ embeds: [embed], content: '', components: [] });
+                                                await interaction.editReply({ embeds: [embed], components: [] });
                                             });
                                         })
                                         .catch(async () => {
@@ -122,13 +126,9 @@ export default {
                                             if (interaction.channel) {
                                                 const message = await interaction.channel.send({ embeds: [await review_ui(id)], components: [like_button(id)] });
     
-                                                guildId = message.guildId as string;
-                                                channelId = message.channelId as string;
-                                                messageId = message.id as string;
-    
                                                 await prisma.review.update({
                                                     where: { id: id },
-                                                    data: { messageLink: `${guildId}/${channelId}/${messageId}` }
+                                                    data: { messageLink: `${message.url.slice(29)}` }
                                                 });
                                                 
                                                 await interaction.deleteReply();

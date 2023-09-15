@@ -43,7 +43,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                     }
                 })
                 .then(async data => {
-                    if (data.length) {
+                    if (data.length && data[0].messageLink) {
                         var [_, channelId, messageId] = data[0].messageLink.split('/');
                         await client.channels.fetch(channelId)
                         .then(async channel => {       
@@ -56,10 +56,10 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                         })
                         .catch(()=>{});
                     }
-                })
+                });
+                
                 await prisma.review.create({
                     data: {
-                        messageLink: `${interaction.guildId}/${interaction.channelId}/${msg.id}`,
                         authorId: interaction.user.id,
                         subjectId: subject.id,
                         score: score,
@@ -79,7 +79,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                     .then(async msg => {
                         await prisma.review.update({
                             where: { id: data.id },
-                            data: { messageLink: `${interaction.guildId}/${interaction.channelId}/${msg.id}`}
+                            data: { messageLink: `${msg.url.slice(29)}`}
                         });
                     });
                 })

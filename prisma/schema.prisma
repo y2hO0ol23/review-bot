@@ -21,7 +21,7 @@ model User {
 
 model Review {
   id          Int       @id @default(autoincrement())
-  messageLink String
+  messageLink String?
 
   score       Float
   title       String
