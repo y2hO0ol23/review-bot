@@ -100,22 +100,24 @@ export default {
                                 .then(async data => {
                                     if (data) {
                                         var [guildId, channelId, messageId] = data.messageLink.split('/');
-                                        var channel = await client.channels.fetch(channelId);
-                                        
-                                        await (channel as TextBasedChannel).messages.fetch(messageId)
-                                        .then(async () => {
-                                            // if message exist
-                                            const embed = new EmbedBuilder()
-                                                .setColor(0x111111)
-                                                .setFields([
-                                                    {
-                                                        name: `📝 ${data.title} [${score_ui(data.score)}]`,
-                                                        value: `➥ https://discord.com/channels/${guildId}/${channelId}/${messageId}`,
-                                                    }
-                                                ]);
-    
-                                            await interaction.editReply({ embeds: [embed], content: '', components: [] });
-                                        }).catch(async () => {
+                                        await client.channels.fetch(channelId)
+                                        .then(async channel => {
+                                            await (channel as TextBasedChannel).messages.fetch(messageId)
+                                            .then(async () => {
+                                                // if message exist
+                                                const embed = new EmbedBuilder()
+                                                    .setColor(0x111111)
+                                                    .setFields([
+                                                        {
+                                                            name: `📝 ${data.title} [${score_ui(data.score)}]`,
+                                                            value: `➥ https://discord.com/channels/${guildId}/${channelId}/${messageId}`,
+                                                        }
+                                                    ]);
+        
+                                                await interaction.editReply({ embeds: [embed], content: '', components: [] });
+                                            });
+                                        })
+                                        .catch(async () => {
                                             // if message not exist
                                             if (interaction.channel) {
                                                 const message = await interaction.channel.send({ embeds: [await review_ui(id)], components: [like_button(id)] });

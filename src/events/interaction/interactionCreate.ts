@@ -148,7 +148,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
             .then(async data => {
                 if (data) {
                     if (data.hates.find(data => data.id == interaction.user.id)) {
-                        return interaction.followUp({ content: `\`You already hatess it\`` });
+                        return interaction.followUp({ content: `\`You already hates it\`` });
                     }
                     else {
                         await create_user_when_not_exist(interaction.user.id);
