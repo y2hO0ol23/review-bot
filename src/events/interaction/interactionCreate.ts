@@ -1,7 +1,7 @@
 import { Interaction, TextBasedChannel, User } from "discord.js";
-import { client, prisma } from "../../index";
-import { like_button, review_ui } from "../../utils/ui";
-import { create_user_when_not_exist } from "../../utils/prisma";
+import { client, prisma } from "src";
+import { like_button, review_ui } from "@utils/ui";
+import { create_user_when_not_exist } from "@utils/prisma";
 
 client.on("interactionCreate", async (interaction: Interaction): Promise<any> => {
     if (!interaction.inCachedGuild()) return;

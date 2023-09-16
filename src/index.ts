@@ -51,6 +51,11 @@ fs.readdirSync(eventsPath).forEach(category => {
     })
 });
 
-client.login(process.env.token).then(() => {
-    console.log(`${client.user?.username} is ready!`);
-})
+if (process.env) {
+    client.login(process.env.token).then(() => {
+        console.log(`${client.user?.username} is ready!`);
+    })
+}
+else {
+    console.log('Need to set .env');
+}

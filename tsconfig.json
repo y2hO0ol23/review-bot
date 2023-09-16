@@ -19,16 +19,21 @@
         "outDir": "dist",
         "strict": true,
         "lib": ["esnext"],
-        "esModuleInterop": true
+        "esModuleInterop": true,
+        "paths": {
+            "@utils/*": [
+                "src/utils/*"
+            ]
+        }
     },
-    "files": [
-        "src/index.ts"
-    ],
     "include": [
         "./**/*.ts"
+    ],
+    "files": [
+        "src/index.ts"
     ],
     "exclude": [
         "node_modules",
         "dist"
-    ],
+    ]
 }
