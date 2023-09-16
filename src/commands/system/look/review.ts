@@ -38,7 +38,7 @@ export async function execute(interaction: CommandInteraction, subject: User) {
             
             const menu = new StringSelectMenuBuilder()
                 .setCustomId(`review`)
-                .setPlaceholder(`Reviews on > ${subject.username} (1/${Math.ceil(options.length/limit)})`)
+                .setPlaceholder(`Reviews on ${subject.username} (1/${Math.ceil(options.length/limit)})`)
                 .addOptions(options.slice(0, limit))
             
             if (options.length > limit) menu.addOptions(next.setValue(`next#${limit}`));
@@ -56,7 +56,7 @@ export async function execute(interaction: CommandInteraction, subject: User) {
 
                             const menu = new StringSelectMenuBuilder()
                                 .setCustomId(`review`)
-                                .setPlaceholder(`Reviews on > ${subject.username} (${Math.ceil(pivot/limit) + 1}/${Math.ceil(options.length/limit)})`)
+                                .setPlaceholder(`Reviews on ${subject.username} (${Math.ceil(pivot/limit) + 1}/${Math.ceil(options.length/limit)})`)
                                 .addOptions(prev.setValue(`prev#${pivot-limit}`))
                                 .addOptions(options.slice(pivot, pivot+limit))
 
@@ -71,7 +71,7 @@ export async function execute(interaction: CommandInteraction, subject: User) {
 
                             const menu = new StringSelectMenuBuilder()
                                 .setCustomId(`review`)
-                                .setPlaceholder(`Reviews on > ${subject.username}`)
+                                .setPlaceholder(`Reviews on ${subject.username}`)
                             
                             if (pivot) menu.addOptions(prev.setValue(`prev#${pivot-limit}`))
                             menu.addOptions(options.slice(pivot, pivot+limit))
