@@ -131,8 +131,8 @@ export async function execute(interaction: CommandInteraction, subject: User) {
                                                         .setColor(0x111111)
                                                         .setFields([
                                                             {
-                                                                name: `🔒 Review has removed and <@${data.authorId}> not in this server`,
-                                                                value: `➥ ${data.title} 〔${score_ui(data.score)}〕`,
+                                                                name: `🔒 Review has removed and author not in this server`,
+                                                                value: `➥ ${data.title} 〔${score_ui(data.score)}〕 - <@${data.authorId}>`,
                                                             }
                                                         ]);
                                                         
