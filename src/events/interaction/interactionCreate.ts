@@ -1,7 +1,7 @@
 import { Interaction, TextBasedChannel, User } from "discord.js";
 import { client, prisma } from "src";
 import { like_button, review_ui } from "@utils/ui";
-import { create_user_when_not_exist } from "@utils/prisma";
+import { create_user_when_not_exist, url_to_prisma_data } from "@utils/prisma";
 
 client.on("interactionCreate", async (interaction: Interaction): Promise<any> => {
     if (!interaction.inCachedGuild()) return;
@@ -21,7 +21,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
             const msg = await interaction.deferReply();
             const subject: User = await client.users.fetch(interaction.customId.split('#')[1]) as User;
             
-            const score: number = Math.max(interaction.fields.getTextInputValue('score').lastIndexOf('★') + 1, 1);
+            const score: number = Math.max(interaction.fields.getTextInputValue('score').split('★').length - 1, 1);
             const title: string = interaction.fields.getTextInputValue('title');
             const content: string = interaction.fields.getTextInputValue('content');
             
@@ -79,7 +79,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                     .then(async msg => {
                         await prisma.review.update({
                             where: { id: data.id },
-                            data: { messageLink: `${msg.url.slice(29)}`}
+                            data: { messageLink: `${url_to_prisma_data(msg.url)}`}
                         });
                     });
                 })

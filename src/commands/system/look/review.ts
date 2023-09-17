@@ -1,8 +1,9 @@
 import 'dotenv/config';
 
-import { ActionRowBuilder, CommandInteraction, EmbedBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextBasedChannel, User } from "discord.js";
+import { ActionRowBuilder, CommandInteraction, EmbedBuilder, GuildChannel, StringSelectMenuBuilder, StringSelectMenuOptionBuilder, TextBasedChannel, User } from "discord.js";
 import { client, prisma } from "src";
 import { like_button, review_ui, score_ui } from "@utils/ui";
+import { url_to_prisma_data } from '@utils/prisma';
 
 export async function execute(interaction: CommandInteraction, subject: User) {
     await prisma.review.findMany({
@@ -110,16 +111,35 @@ export async function execute(interaction: CommandInteraction, subject: User) {
                                         })
                                         .catch(async () => {
                                             // if message not exist
-                                            if (interaction.channel) {
-                                                const message = await interaction.channel.send({ embeds: [await review_ui(id)], components: [like_button(id)] });
+                                            await client.channels.fetch(interaction.channelId)
+                                            .then(async channel => {
+                                                const memberInChannel = (channel as GuildChannel).members.get(data.authorId);
+                                                if (memberInChannel) {
+                                                    if (!interaction.channel) return;
 
-                                                await prisma.review.update({
-                                                    where: { id: id },
-                                                    data: { messageLink: `${message.url.slice(29)}` }
-                                                });
-                                                
-                                                await interaction.deleteReply();
-                                            }
+                                                    const message = await interaction.channel.send({ embeds: [await review_ui(id)], components: [like_button(id)] });
+
+                                                    await prisma.review.update({
+                                                        where: { id: id },
+                                                        data: { messageLink: `${url_to_prisma_data(message.url)}` }
+                                                    });
+                                                        
+                                                    await interaction.deleteReply();
+                                                }
+                                                else {
+                                                    const embed = new EmbedBuilder()
+                                                        .setColor(0x111111)
+                                                        .setFields([
+                                                            {
+                                                                name: `🔒 Review has removed and <@${data.authorId}> not in this server`,
+                                                                value: `➥ ${data.title} 〔${score_ui(data.score)}〕`,
+                                                            }
+                                                        ]);
+                                                        
+                                                    await interaction.editReply({ embeds: [embed], components: [] });
+                                                }
+                                            })
+                                            .catch(()=>{})
                                         });
                                     }
                                 }

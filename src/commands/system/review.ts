@@ -17,7 +17,7 @@ export default {
 
         const subject = interaction.options.getUser('subject') as User;
         if (subject.id == interaction.user.id) {
-            return await interaction.reply({ content: '`Do not review for your self.`', ephemeral: true });
+            return await interaction.reply({ content: '`Do not review for your self.`' });
         }
 
         const modal = new ModalBuilder()
@@ -28,7 +28,6 @@ export default {
 			.setCustomId('score')
 			.setLabel("Score")
             .setValue("★★★★★")
-            .setPlaceholder("☆")
 			.setStyle(TextInputStyle.Short)
             .setMinLength(1)
             .setMaxLength(5)
