@@ -1,6 +1,6 @@
-import { Interaction, TextBasedChannel, User } from "discord.js";
+import { EmbedBuilder, Interaction, TextBasedChannel, User } from "discord.js";
 import { client, prisma } from "src";
-import { like_button, review_ui } from "@utils/ui";
+import { like_button, review_ui, score_ui } from "@utils/ui";
 import { create_user_when_not_exist, url_to_prisma_data } from "@utils/prisma";
 
 client.on("interactionCreate", async (interaction: Interaction): Promise<any> => {
@@ -18,7 +18,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
     
     if (interaction.isModalSubmit()) {
         if (interaction.customId.startsWith('review')) {
-            const msg = await interaction.deferReply();
+            await interaction.deferReply();
             const subject: User = await client.users.fetch(interaction.customId.split('#')[1]) as User;
             
             const score: number = Math.max(interaction.fields.getTextInputValue('score').split('★').length - 1, 1);
@@ -81,6 +81,18 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                             where: { id: data.id },
                             data: { messageLink: `${url_to_prisma_data(msg.url)}`}
                         });
+                        
+                        // send to dm
+                        const embed = new EmbedBuilder()
+                            .setColor(0x111111)
+                            .setFields([
+                                {
+                                    name: `🔔 You were reviewed`,
+                                    value: `➥ ${msg.url}`,
+                                }
+                            ]);
+
+                        await subject.send({ embeds: [embed] });
                     });
                 })
                 .catch(err => console.log(err));
