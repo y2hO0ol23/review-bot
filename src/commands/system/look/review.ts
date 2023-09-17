@@ -115,6 +115,7 @@ export async function execute(interaction: CommandInteraction, subject: User) {
                                             .then(async channel => {
                                                 const memberInChannel = (channel as GuildChannel).members.get(data.authorId);
                                                 if (memberInChannel) {
+                                                    // if author in this channel
                                                     if (!interaction.channel) return;
 
                                                     const message = await interaction.channel.send({ embeds: [await review_ui(id)], components: [like_button(id)] });
@@ -125,8 +126,21 @@ export async function execute(interaction: CommandInteraction, subject: User) {
                                                     });
                                                         
                                                     await interaction.deleteReply();
+                                                    
+                                                    // send to dm
+                                                    const embed = new EmbedBuilder()
+                                                        .setColor(0x111111)
+                                                        .setFields([
+                                                            {
+                                                                name: `🔔 Your review has resend`,
+                                                                value: `➥ ${message.url}`,
+                                                            }
+                                                        ]);
+
+                                                    await subject.send({ embeds: [embed] });
                                                 }
                                                 else {
+                                                    // if author not in this channel
                                                     const embed = new EmbedBuilder()
                                                         .setColor(0x111111)
                                                         .setFields([
