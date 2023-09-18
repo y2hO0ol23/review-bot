@@ -28,3 +28,25 @@ export function get_average(data: any) {
 
     return average;
 }
+
+export async function update_guild(guildId: string, state: string) {
+    await prisma.guild.findUnique({
+        where: { id: guildId }
+    })
+    .then(async data => {
+        if (data) {
+            await prisma.guild.update({
+                where: { id: guildId },
+                data: { state: state }
+            });
+        }
+        else {
+            await prisma.guild.create({
+                data: {
+                    id: guildId,
+                    state: state
+                }
+            });
+        }
+    });
+}

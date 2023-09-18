@@ -43,9 +43,13 @@ model Review {
 }
 
 model Role {
-  id      String @id
-  guildId String
+  id      String  @id
 
-  user    User          @relation("role", fields: [userId], references: [id])
+  user    User    @relation("role", fields: [userId], references: [id])
   userId  String
+}
+
+model Guild {
+  id      String  @id
+  state   String
 }

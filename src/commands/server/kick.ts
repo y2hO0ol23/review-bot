@@ -1,3 +1,4 @@
+import { update_guild } from "@utils/prisma";
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, CommandInteraction, EmbedBuilder, PermissionFlagsBits, SlashCommandBuilder, TextBasedChannel, User } from "discord.js"
 import { client, prisma } from "src";
 
@@ -30,9 +31,12 @@ export default {
                 if (!interaction.inCachedGuild()) return;
                 if (component.isButton()) {
                     await interaction.deleteReply();
+
+                    // update guild state
+                    await update_guild(interaction.guildId, 'kicked');
                     // remove roles
                     await prisma.role.findMany({
-                        where: { guildId: interaction.guildId },
+                        where: { id: { startsWith: `${interaction.guildId}/` }},
                     })
                     .then(async data => {
                         for (var e of data) {
@@ -43,7 +47,7 @@ export default {
                     });
                 
                     await prisma.role.deleteMany({
-                        where: { guildId: interaction.guildId },
+                        where: { id: { startsWith: `${interaction.guildId}/` }},
                     })
                     // remove reviews (only message not data)
                     await prisma.review.findMany({

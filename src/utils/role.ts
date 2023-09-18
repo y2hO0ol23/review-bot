@@ -20,8 +20,7 @@ export async function create_role(member: GuildMember|PartialGuildMember) {
             
             await prisma.role.create({
                 data: {
-                    id: role.id,
-                    guildId: guild.id,
+                    id: `${guild.id}/${role.id}`,
                     user: {
                         connect: { id: member.id }
                     }
@@ -33,7 +32,10 @@ export async function create_role(member: GuildMember|PartialGuildMember) {
 
 export async function delete_role(memberId: string, guildId: string) {
     await prisma.role.findMany({
-        where: { userId: memberId, guildId: guildId },
+        where: { 
+            userId: memberId, 
+            id: { startsWith: `${guildId}/` }
+        },
     })
     .then(async data => {
         if (data.length) {
@@ -44,7 +46,7 @@ export async function delete_role(memberId: string, guildId: string) {
             .catch(()=>{});
 
             await prisma.role.delete({
-                where: { id: data[0].id }
+                where: { id: `${data[0].id}` }
             });
         }
     });
@@ -58,7 +60,7 @@ export async function edit_role(memberId: string, guildId: string, roleId: strin
         await guild.roles.edit(data as RoleResolvable, value)
         .catch(async () => {
             await prisma.role.delete({
-                where: { id: roleId }
+                where: { id: `${guildId}/${roleId}` }
             });
             
             await guild.members.fetch(memberId)

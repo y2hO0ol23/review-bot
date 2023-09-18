@@ -103,7 +103,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                     include: { roles: true }
                 })
                 .then(async data => {
-                    const role = data?.roles.find(e => e.guildId == guild.id);
+                    const role = data?.roles.find(e => e.id.startsWith(`${guild.id}/`));
                     if (role) {
                         await edit_role(subject.id, guild.id, role.id, {
                             name: `⭐${average.toFixed(1)} (${count_ui(count)})`
