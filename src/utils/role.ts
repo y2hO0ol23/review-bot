@@ -58,6 +58,12 @@ export async function edit_role(memberId: string, guildId: string, roleId: strin
     await guild.roles.fetch(roleId)
     .then(async data => {
         await guild.roles.edit(data as RoleResolvable, value)
-        .catch(async () => await delete_role(memberId, guildId));
+        .catch(async () => {
+            await delete_role(memberId, guildId);
+            
+            await guild.members.fetch(memberId)
+            .then(async member => await create_role(member))
+            .catch(()=>{});
+        });
     })
 }
