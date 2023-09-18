@@ -17,6 +17,8 @@ model User {
   reviewsGiven    Review[]  @relation("given")
   reviewsLike     Review[]  @relation("like")
   reviewsHate     Review[]  @relation("hate")
+
+  roles           Role[]    @relation("role")
 }
 
 model Review {
@@ -38,4 +40,12 @@ model Review {
   hates       User[]    @relation("hate")
 
   TimeStamp   DateTime  @default(now())
+}
+
+model Role {
+  id      String @id
+  guildId String
+
+  user    User          @relation("role", fields: [userId], references: [id])
+  userId  String
 }

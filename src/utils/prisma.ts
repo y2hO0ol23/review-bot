@@ -16,3 +16,15 @@ export async function create_user_when_not_exist(id: string) {
 export function url_to_prisma_data(url: string) {
     return url.slice(29);
 }
+
+export function get_average(data: any) {
+    let average: number = 0.0;
+
+    if (data.length) {
+        average = data.reduce((acc: any, data: any) => {
+            return acc + data.score;
+        }, 0.0) / data.length;
+    }
+
+    return average;
+}

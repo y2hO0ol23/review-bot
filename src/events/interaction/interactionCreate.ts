@@ -1,7 +1,8 @@
 import { EmbedBuilder, Interaction, TextBasedChannel, User } from "discord.js";
 import { client, prisma } from "src";
-import { like_button, review_ui } from "@utils/ui";
-import { create_user_when_not_exist, url_to_prisma_data } from "@utils/prisma";
+import { count_ui, like_button, review_ui } from "@utils/ui";
+import { get_average, url_to_prisma_data } from "@utils/prisma";
+import { edit_role } from "@utils/role";
 
 client.on("interactionCreate", async (interaction: Interaction): Promise<any> => {
     if (!interaction.inCachedGuild()) return;
@@ -24,80 +25,92 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
             const score: number = Math.max(interaction.fields.getTextInputValue('score').split('★').length - 1, 1);
             const title: string = interaction.fields.getTextInputValue('title');
             const content: string = interaction.fields.getTextInputValue('content');
-            
-            await create_user_when_not_exist(interaction.user.id);
 
-            await prisma.user.findUnique({
-                where: { id: subject.id }
+            // remove last review that author is same
+            await prisma.review.findMany({
+                where: {
+                    authorId: interaction.user.id,
+                    subjectId: subject.id
+                }
             })
             .then(async data => {
-                if (!data) {
-                    data = await prisma.user.create({
-                        data: { id: subject.id }
-                    });
-                }
-                await prisma.review.findMany({
-                    where: {
-                        authorId: interaction.user.id,
-                        subjectId: subject.id
-                    }
-                })
-                .then(async data => {
-                    if (data.length && data[0].messageLink) {
-                        var [_, channelId, messageId] = data[0].messageLink.split('/');
-                        await client.channels.fetch(channelId)
-                        .then(async channel => {       
-                            await (channel as TextBasedChannel).messages.fetch(messageId)
-                            .then(async msg => { await msg.delete(); }).catch(()=>{});
-                            
-                            await prisma.review.delete({
-                                where: { id: data[0].id }
-                            });
-                        })
-                        .catch(()=>{});
-                    }
-                });
-                
-                await prisma.review.create({
-                    data: {
-                        authorId: interaction.user.id,
-                        subjectId: subject.id,
-                        score: score,
-                        title: title,
-                        content: content,
-                        like: 1,
-                        likes: {
-                            connect: { id: interaction.user.id }
-                        }
-                    }
-                })
-                .then(async data => {
-                    await interaction.editReply({ 
-                        embeds: [await review_ui(data.id)],
-                        components: [like_button(data.id)],
-                    })
-                    .then(async msg => {
-                        await prisma.review.update({
-                            where: { id: data.id },
-                            data: { messageLink: `${url_to_prisma_data(msg.url)}`}
-                        });
+                if (data.length && data[0].messageLink) {
+                    var [_, channelId, messageId] = data[0].messageLink.split('/');
+                    await client.channels.fetch(channelId)
+                    .then(async channel => {       
+                        await (channel as TextBasedChannel).messages.fetch(messageId)
+                        .then(async msg => { await msg.delete(); }).catch(()=>{});
                         
-                        // send to dm
-                        const embed = new EmbedBuilder()
-                            .setColor(0x111111)
-                            .setFields([
-                                {
-                                    name: `🔔 You were reviewed`,
-                                    value: `➥ ${msg.url}`,
-                                }
-                            ]);
-
-                        await subject.send({ embeds: [embed] }).catch(()=>{});
-                    });
+                        await prisma.review.delete({
+                            where: { id: data[0].id }
+                        });
+                    })
+                    .catch(()=>{});
+                }
+            });
+            
+            // add new review
+            await prisma.review.create({
+                data: {
+                    authorId: interaction.user.id,
+                    subjectId: subject.id,
+                    score: score,
+                    title: title,
+                    content: content,
+                    like: 1,
+                    likes: {
+                        connect: { id: interaction.user.id }
+                    }
+                }
+            })
+            .then(async data => {
+                await interaction.editReply({ 
+                    embeds: [await review_ui(data.id)],
+                    components: [like_button(data.id)],
                 })
-                .catch(err => console.log(err));
+                .then(async msg => {
+                    await prisma.review.update({
+                        where: { id: data.id },
+                        data: { messageLink: `${url_to_prisma_data(msg.url)}`}
+                    });
+                    
+                    // send to dm
+                    const embed = new EmbedBuilder()
+                        .setColor(0x111111)
+                        .setFields([
+                            {
+                                name: `🔔 You were reviewed`,
+                                value: `➥ ${msg.url}`,
+                            }
+                        ]);
+
+                    await subject.send({ embeds: [embed] }).catch(()=>{});
+                });
             })
             .catch(err => console.log(err));
+
+            //update role
+            await prisma.review.findMany({
+                where: { subjectId: subject.id }
+            })
+            .then(async data => {
+                const guild = interaction.guild;
+                const average = get_average(data);
+                const count = data.length;
+
+                await prisma.user.findUnique({
+                    where: { id: subject.id },
+                    include: { roles: true }
+                })
+                .then(async data => {
+                    const role = data?.roles.find(e => e.guildId == guild.id);
+                    if (role) {
+                        edit_role(subject.id, guild.id, role.id, {
+                            name: `⭐${average.toFixed(1)} (${count_ui(count)})`
+                        });
+                    }
+                })
+            });
         }
     }
     if (interaction.isButton()) {
@@ -111,8 +124,6 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
             .then(async data => {
                 if (data) {
                     if (!data.likes.find(data => data.id == interaction.user.id)) {
-                        await create_user_when_not_exist(interaction.user.id);
-
                         if (data.hates.find(data => data.id == interaction.user.id)) {
                             await prisma.review.update({
                                 where: { id: data.id },
@@ -155,8 +166,6 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
             .then(async data => {
                 if (data) {
                     if (!data.hates.find(data => data.id == interaction.user.id)) {
-                        await create_user_when_not_exist(interaction.user.id);
-
                         if (data.likes.find(data => data.id == interaction.user.id)) {
                             await prisma.review.update({
                                 where: { id: data.id },
