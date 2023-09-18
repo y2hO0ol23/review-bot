@@ -12,10 +12,8 @@ export async function create_role(member: GuildMember|PartialGuildMember) {
     .then(async data => {
         const average = get_average(data);
 
-        const rolepos = guild.roles.cache.find(r => r.tags?.botId == client.user?.id)?.position as number;
         await guild.roles.create({
             name: `⭐${average.toFixed(1)} (${count_ui(data.length)})`,
-            position: rolepos - 1
         })
         .then(async role => {
             await member.roles.add(role);
