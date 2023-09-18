@@ -18,10 +18,16 @@ export async function execute(interaction: CommandInteraction, subject: User) {
         const embed = new EmbedBuilder()
             .setColor(0x111111)
             .setDescription(`<@${subject.id}> **⭐${average.toFixed(1)} (${count_ui(data.length)})**`)
-            .setThumbnail(subject.displayAvatarURL());
+            .setThumbnail(subject.displayAvatarURL())
+            .setFields([
+                {
+                    name: `📑 No reviews`,
+                    value: '``` ```',
+                }
+            ]);
 
         if (data.length) {
-            embed.addFields([
+            embed.setFields([
                 {
                     name: `📑 ${data[0].title} 〔${score_ui(data[0].score)}〕`,
                     value: `\`\`\`${data[0].content}\`\`\``,
