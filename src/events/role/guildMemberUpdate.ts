@@ -11,8 +11,6 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
         const roles_removed = old_roles.filter(e => !new_roles.has(e.id));
         const roles_added = new_roles.filter(e => !old_roles.has(e.id));
 
-        console.log(roles_removed.map(e => e.id), roles_added.map(e => e.id))
-
         for (const [roleId, role] of roles_removed) {
             await prisma.role.findUnique({
                 where: { id: `${guild.id}/${roleId}` },
