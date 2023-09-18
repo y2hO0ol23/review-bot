@@ -57,7 +57,9 @@ export async function edit_role(memberId: string, guildId: string, roleId: strin
     .then(async data => {
         await guild.roles.edit(data as RoleResolvable, value)
         .catch(async () => {
-            await delete_role(memberId, guildId);
+            await prisma.role.delete({
+                where: { id: roleId }
+            });
             
             await guild.members.fetch(memberId)
             .then(async member => await create_role(member))
