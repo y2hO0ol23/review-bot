@@ -114,6 +114,7 @@ export async function execute(interaction: CommandInteraction, subject: User) {
                                             await client.channels.fetch(interaction.channelId)
                                             .then(async channel => {
                                                 await (channel as GuildChannel).fetch(true);
+                                                console.log((channel as GuildChannel).members.size);
                                                 const memberInChannel = (channel as GuildChannel).members.get(data.authorId);
                                                 if (memberInChannel) {
                                                     // if author in this channel
