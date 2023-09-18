@@ -112,48 +112,50 @@ export async function execute(interaction: CommandInteraction, subject: User) {
                                         .catch(async () => {
                                             // if message not exist
                                             await client.channels.fetch(interaction.channelId)
-                                            .then(async _channel => {
-                                                const channel = await (_channel as GuildChannel).fetch(true);
-                                                console.log(channel.members.size);
-                                                const memberInChannel = channel.members.get(data.authorId);
-                                                if (memberInChannel) {
-                                                    // if author in this channel
-                                                    if (!interaction.channel) return;
+                                            .then(async channel => {
+                                                await (channel as GuildChannel).fetch()
+                                                .then(async channel => {
+                                                    await channel.guild.members.fetch({ user: data.authorId });
+                                                    const memberInChannel = channel.members.get(data.authorId);
+                                                    if (memberInChannel) {
+                                                        // if author in this channel
+                                                        if (!interaction.channel) return;
 
-                                                    const message = await interaction.channel.send({ embeds: [await review_ui(id)], components: [like_button(id)] });
+                                                        const message = await interaction.channel.send({ embeds: [await review_ui(id)], components: [like_button(id)] });
 
-                                                    await prisma.review.update({
-                                                        where: { id: id },
-                                                        data: { messageLink: `${url_to_prisma_data(message.url)}` }
-                                                    });
+                                                        await prisma.review.update({
+                                                            where: { id: id },
+                                                            data: { messageLink: `${url_to_prisma_data(message.url)}` }
+                                                        });
+                                                            
+                                                        await interaction.deleteReply();
                                                         
-                                                    await interaction.deleteReply();
-                                                    
-                                                    // send to dm
-                                                    const embed = new EmbedBuilder()
-                                                        .setColor(0x111111)
-                                                        .setFields([
-                                                            {
-                                                                name: `🔔 Your review has resend`,
-                                                                value: `➥ ${message.url}`,
-                                                            }
-                                                        ]);
+                                                        // send to dm
+                                                        const embed = new EmbedBuilder()
+                                                            .setColor(0x111111)
+                                                            .setFields([
+                                                                {
+                                                                    name: `🔔 Your review has resend`,
+                                                                    value: `➥ ${message.url}`,
+                                                                }
+                                                            ]);
 
-                                                    await subject.send({ embeds: [embed] }).catch(()=>{});
-                                                }
-                                                else {
-                                                    // if author not in this channel
-                                                    const embed = new EmbedBuilder()
-                                                        .setColor(0x111111)
-                                                        .setFields([
-                                                            {
-                                                                name: `🔒 Review has removed and author not in this server`,
-                                                                value: `➥ ${data.title} 〔${score_ui(data.score)}〕 - <@${data.authorId}>`,
-                                                            }
-                                                        ]);
-                                                        
-                                                    await interaction.editReply({ embeds: [embed], components: [] });
-                                                }
+                                                        await subject.send({ embeds: [embed] }).catch(()=>{});
+                                                    }
+                                                    else {
+                                                        // if author not in this channel
+                                                        const embed = new EmbedBuilder()
+                                                            .setColor(0x111111)
+                                                            .setFields([
+                                                                {
+                                                                    name: `🔒 Review has removed and author not in this server`,
+                                                                    value: `➥ ${data.title} 〔${score_ui(data.score)}〕 - <@${data.authorId}>`,
+                                                                }
+                                                            ]);
+                                                            
+                                                        await interaction.editReply({ embeds: [embed], components: [] });
+                                                    }
+                                                })  
                                             })
                                             .catch(()=>{})
                                         });
