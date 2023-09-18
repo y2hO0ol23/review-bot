@@ -56,3 +56,12 @@ export function like_button(id: number) {
     
     return new ActionRowBuilder<ButtonBuilder>().addComponents(like, hate);
 }
+
+export function pin_button() {
+    const pin = new ButtonBuilder()
+        .setCustomId(`pin`)
+        .setLabel('📌')
+        .setStyle(ButtonStyle.Secondary);
+    
+    return new ActionRowBuilder<ButtonBuilder>().addComponents(pin);
+}
