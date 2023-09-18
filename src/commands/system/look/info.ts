@@ -1,6 +1,6 @@
 import { CommandInteraction, EmbedBuilder, User } from "discord.js";
 import { prisma } from "src";
-import { count_ui, pin_button, score_ui } from "@utils/ui";
+import { count_ui, score_ui } from "@utils/ui";
 
 export async function execute(interaction: CommandInteraction, subject: User) {
     await prisma.review.findMany({
