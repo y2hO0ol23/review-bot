@@ -137,7 +137,7 @@ export async function execute(interaction: CommandInteraction, subject: User) {
                                                             }
                                                         ]);
 
-                                                    await subject.send({ embeds: [embed] });
+                                                    await subject.send({ embeds: [embed] }).catch(()=>{});
                                                 }
                                                 else {
                                                     // if author not in this channel

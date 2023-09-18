@@ -92,7 +92,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                                 }
                             ]);
 
-                        await subject.send({ embeds: [embed] });
+                        await subject.send({ embeds: [embed] }).catch(()=>{});
                     });
                 })
                 .catch(err => console.log(err));
