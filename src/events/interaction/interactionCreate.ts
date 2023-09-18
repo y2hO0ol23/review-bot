@@ -1,6 +1,6 @@
 import { EmbedBuilder, Interaction, TextBasedChannel, User } from "discord.js";
 import { client, prisma } from "src";
-import { like_button, review_ui, score_ui } from "@utils/ui";
+import { like_button, review_ui } from "@utils/ui";
 import { create_user_when_not_exist, url_to_prisma_data } from "@utils/prisma";
 
 client.on("interactionCreate", async (interaction: Interaction): Promise<any> => {

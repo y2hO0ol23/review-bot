@@ -53,8 +53,9 @@ fs.readdirSync(eventsPath).forEach(category => {
 
 if (process.env) {
     client.login(process.env.token).then(() => {
-        console.log(`${client.user?.username} is ready!`);
-        client.user?.setActivity({ name: '/review' });
+        const bot = client.user;
+        console.log(`${bot?.username} is ready!`);
+        bot?.setActivity({ name: '/review' });
     })
 }
 else console.log('Need to set .env');

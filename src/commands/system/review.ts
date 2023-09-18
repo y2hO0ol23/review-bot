@@ -45,7 +45,9 @@ export default {
 			.setStyle(TextInputStyle.Paragraph)
             .setMinLength(1)
             .setMaxLength(256)
-            
+        
+        var last: number|undefined;
+        
         await prisma.user.findUnique({
             where: { id: subject.id }
         })
@@ -59,6 +61,7 @@ export default {
                 })
                 .then(data => {
                     if (data.length) {
+                        last = new Date().getTime() - data[0].TimeStamp.getTime();
                         modal.setTitle(`Edit ${subject.username}`);
                         score.setValue("★".repeat(data[0].score));
                         title.setValue(data[0].title);
@@ -70,12 +73,17 @@ export default {
         })
         .catch(err => console.log(err));
         
-		modal.addComponents(
-            new ActionRowBuilder<TextInputBuilder>().addComponents(score),
-            new ActionRowBuilder<TextInputBuilder>().addComponents(title),
-            new ActionRowBuilder<TextInputBuilder>().addComponents(content),
-        );
-        
-		await interaction.showModal(modal);
+        if (last && last < 60 * 1000) {
+            await interaction.reply({ content: `\`${60 - Math.floor(last / 1000)}s delay in progress to prevent chat spam\``, ephemeral: true })
+        }
+        else {
+            modal.addComponents(
+                new ActionRowBuilder<TextInputBuilder>().addComponents(score),
+                new ActionRowBuilder<TextInputBuilder>().addComponents(title),
+                new ActionRowBuilder<TextInputBuilder>().addComponents(content),
+            );
+            
+            await interaction.showModal(modal);
+        }
     },
 }
