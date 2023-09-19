@@ -5,6 +5,8 @@ import { prisma } from "src";
 export default async function like(interaction: ButtonInteraction<"cached">) {
     const id = parseInt(interaction.customId.split('#')[1]);
 
+    await interaction.deferUpdate();
+    
     await prisma.review.findUnique({
         where: { id: id },
         include: { likes: true, hates: true }
@@ -40,6 +42,5 @@ export default async function like(interaction: ButtonInteraction<"cached">) {
         else {
             await interaction.message.edit({ embeds: [await review_ui()], components: [] });
         }
-        await interaction.deferUpdate();
     })
 }
