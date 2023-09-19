@@ -38,7 +38,6 @@ export async function review_ui(id?: number) {
             if (subject) embed.setThumbnail(subject.displayAvatarURL());
         }
     })
-    .catch(console.error);
 
     return embed;
 }

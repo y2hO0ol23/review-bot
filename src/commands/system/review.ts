@@ -68,13 +68,15 @@ export default {
                         content.setValue(data[0].content);
                     }
                 })
-                .catch(console.error);
             }
         })
-        .catch(console.error);
         
         if (last && last < 60 * 1000) {
-            await interaction.reply({ content: `\`${60 - Math.floor(last / 1000)}s delay in progress to prevent chat spam\``, ephemeral: true })
+            await interaction.reply({ 
+                content: `\`${60 - Math.floor(last / 1000)}s delay in progress to prevent chat spam\``, 
+                ephemeral: true 
+            })
+            .catch(()=>{});
         }
         else {
             modal.addComponents(
