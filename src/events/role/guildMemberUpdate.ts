@@ -1,4 +1,4 @@
-import { create_role, delete_role } from "@utils/role";
+import { give_role, remove_role } from "@utils/role";
 import { client, prisma } from "src";
 
 client.on('guildMemberUpdate', async (oldMember, newMember) => {
@@ -17,11 +17,11 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
                 include: { user: true }
             })
             .then(async data => {
-                if (data && data.userId == newMember.id) {
+                if (data && data.user.find(e => e.id == newMember.id)) {
                     await newMember.roles.add(role)
                     .catch(async () => {
-                        await delete_role(newMember.id, guild.id);
-                        await create_role(newMember);
+                        await remove_role(newMember);
+                        await give_role(newMember);
                     });
                 }
             })
@@ -33,11 +33,11 @@ client.on('guildMemberUpdate', async (oldMember, newMember) => {
                 include: { user: true }
             })
             .then(async data => {
-                if (data && data.userId != newMember.id) {
+                if (data && !data.user.find(e => e.id == newMember.id)) {
                     await newMember.roles.remove(role)
                     .catch(async () => {
-                        await delete_role(newMember.id, guild.id);
-                        await create_role(newMember);
+                        await remove_role(newMember);
+                        await give_role(newMember);
                     })
                 }
             })

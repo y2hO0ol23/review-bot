@@ -174,5 +174,5 @@ export async function execute(interaction: CommandInteraction, subject: User) {
             });
         }
     })
-    .catch(err => console.log(err));
+    .catch(console.error);
 }

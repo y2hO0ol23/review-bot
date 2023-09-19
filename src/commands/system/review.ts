@@ -68,10 +68,10 @@ export default {
                         content.setValue(data[0].content);
                     }
                 })
-                .catch(err => console.log(err));
+                .catch(console.error);
             }
         })
-        .catch(err => console.log(err));
+        .catch(console.error);
         
         if (last && last < 60 * 1000) {
             await interaction.reply({ content: `\`${60 - Math.floor(last / 1000)}s delay in progress to prevent chat spam\``, ephemeral: true })
@@ -83,7 +83,7 @@ export default {
                 new ActionRowBuilder<TextInputBuilder>().addComponents(content),
             );
             
-            await interaction.showModal(modal);
+            await interaction.showModal(modal).catch(()=>{});
         }
     },
 }

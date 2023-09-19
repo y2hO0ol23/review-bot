@@ -1,9 +1,8 @@
-import { Guild, GuildMember, PartialGuildMember, RoleResolvable } from "discord.js";
-import { client, prisma } from "src";
-import { count_ui } from "./ui";
+import { GuildMember, PartialGuildMember, Role } from "discord.js";
+import {prisma } from "src";
 import { get_average } from "./prisma";
 
-export async function create_role(member: GuildMember|PartialGuildMember) {
+export async function give_role(member: GuildMember|PartialGuildMember) {
     const guild = member.guild;
 
     await prisma.review.findMany({
@@ -11,61 +10,113 @@ export async function create_role(member: GuildMember|PartialGuildMember) {
     })
     .then(async data => {
         const average = get_average(data);
+        const rolename = `⭐${average.toFixed(1)}`
 
-        await guild.roles.create({
-            name: `⭐${average.toFixed(1)} (${count_ui(data.length)})`,
+        await prisma.role.findUnique({
+            where: { display: rolename }
         })
-        .then(async role => {
-            await member.roles.add(role);
-            
-            await prisma.role.create({
-                data: {
-                    id: `${guild.id}/${role.id}`,
-                    user: {
-                        connect: { id: member.id }
+        .then(async data => {
+            if (data) {
+                const role = await guild.roles.fetch(data.id.split('/')[1]);
+                if (role) {
+                    try {
+                        await member.roles.add(role);
+
+                        return await prisma.role.update({
+                            where: { id: `${data.id}` },
+                            data: {
+                                user: {
+                                    connect: { id: member.id }
+                                }
+                            }
+                        });
+                    }
+                    catch {
+                        await prisma.user.findMany({
+                            where: {
+                                roles: {
+                                    some: { id: `${data.id}` }
+                                }
+                            }
+                        })
+                        .then(async users => {
+                            await prisma.role.delete({
+                                where: { id: `${data.id}` }
+                            });
+                            for (var user of users) {
+                                const member = await guild.members.fetch(user.id);
+                                await give_role(member);
+                            }
+                        })
                     }
                 }
+                else {
+                    await prisma.role.delete({
+                        where: { id: `${guild.id}/${data.id}` }
+                    });
+                }
+            }
+            
+            await guild.roles.create({
+                name: rolename
+            })
+            .then(async role => {
+                await member.roles.add(role);
+                
+                await prisma.role.create({
+                    data: {
+                        id: `${guild.id}/${role.id}`,
+                        display: rolename,
+                        user: {
+                            connect: { id: member.id }
+                        }
+                    }
+                });
             });
         })
     })
 }
 
-export async function delete_role(memberId: string, guildId: string) {
-    await prisma.role.findMany({
-        where: { 
-            userId: memberId, 
-            id: { startsWith: `${guildId}/` }
-        },
+export async function remove_role(member: GuildMember|PartialGuildMember) {
+    await prisma.user.findUnique({
+        where: { id: member.id },
+        include: { 
+            roles: {
+                include: { user : true }
+            } 
+        }
     })
     .then(async data => {
-        if (data.length) {
-            const guild = await client.guilds.fetch(guildId);
-
-            await guild.roles.fetch(data[0].id)
-            .then(async role => await role?.delete())
-            .catch(()=>{});
-
-            await prisma.role.delete({
-                where: { id: `${data[0].id}` }
-            });
+        if (data) {
+            const roleData = data.roles.find(e => e.id.startsWith(`${member.guild.id}/`));
+            if (roleData) {
+                const userLeft = roleData.user.length;
+                if (userLeft - 1 != 0) {
+                    await prisma.user.update({
+                        where: { id: member.id },
+                        data: {
+                            roles: {
+                                disconnect: { id: roleData?.id }
+                            }
+                        }
+                    });
+    
+                    await member.guild.roles.fetch(roleData.id.split('/')[1])
+                    .then(async role => await member.roles.remove(role as Role))
+                    .catch(()=>{});
+                }
+                else {
+                    await prisma.role.delete({
+                        where: { id: roleData.id }
+                    });
+    
+                    await member.guild.roles.fetch(roleData.id.split('/')[1])
+                    .then(async role => role?.delete())
+                    .catch(()=>{});
+                }
+            }
         }
     });
-}
-
-export async function edit_role(memberId: string, guildId: string, roleId: string, value: any) {
-    const guild = await client.guilds.fetch(guildId);
-
-    await guild.roles.fetch(roleId)
-    .then(async data => {
-        await guild.roles.edit(data as RoleResolvable, value)
-        .catch(async () => {
-            await prisma.role.delete({
-                where: { id: `${guildId}/${roleId}` }
-            });
-            
-            await guild.members.fetch(memberId)
-            .then(async member => await create_role(member))
-            .catch(()=>{});
-        });
-    })
+    
+    await give_role(member);
 }

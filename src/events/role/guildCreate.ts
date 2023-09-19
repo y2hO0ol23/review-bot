@@ -1,5 +1,5 @@
 import { create_user_when_not_exist, update_guild } from "@utils/prisma";
-import { create_role } from "@utils/role";
+import { give_role } from "@utils/role";
 import { client, prisma } from "src";
 
 client.on('guildCreate', async guild => {
@@ -15,6 +15,6 @@ client.on('guildCreate', async guild => {
         })
         if (data?.state != 'join') break;
         
-        await create_role(member);
+        await give_role(member);
     }
 })

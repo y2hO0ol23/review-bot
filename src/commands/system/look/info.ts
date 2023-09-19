@@ -34,5 +34,5 @@ export async function execute(interaction: CommandInteraction, subject: User) {
 
         await interaction.reply({ embeds: [embed], ephemeral: true })
     })
-    .catch(err => console.log(err));
+    .catch(console.error);
 }

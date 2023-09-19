@@ -1,8 +1,8 @@
-import { EmbedBuilder, Interaction, TextBasedChannel, User } from "discord.js";
+import { EmbedBuilder, GuildMember, Interaction, TextBasedChannel, User } from "discord.js";
 import { client, prisma } from "src";
-import { count_ui, like_button, review_ui } from "@utils/ui";
+import { like_button, review_ui } from "@utils/ui";
 import { get_average, url_to_prisma_data } from "@utils/prisma";
-import { edit_role } from "@utils/role";
+import { give_role, remove_role } from "@utils/role";
 
 client.on("interactionCreate", async (interaction: Interaction): Promise<any> => {
     if (!interaction.inCachedGuild()) return;
@@ -20,7 +20,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
     if (interaction.isModalSubmit()) {
         if (interaction.customId.startsWith('review')) {
             await interaction.deferReply();
-            const subject: User = await client.users.fetch(interaction.customId.split('#')[1]) as User;
+            const subject = await interaction.guild.members.fetch(interaction.customId.split('#')[1]) as GuildMember;
             
             const score: number = Math.max(interaction.fields.getTextInputValue('score').split('★').length - 1, 1);
             const title: string = interaction.fields.getTextInputValue('title');
@@ -87,30 +87,11 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                     await subject.send({ embeds: [embed] }).catch(()=>{});
                 });
             })
-            .catch(err => console.log(err));
+            .catch(console.error);
 
             //update role
-            await prisma.review.findMany({
-                where: { subjectId: subject.id }
-            })
-            .then(async data => {
-                const guild = interaction.guild;
-                const average = get_average(data);
-                const count = data.length;
-
-                await prisma.user.findUnique({
-                    where: { id: subject.id },
-                    include: { roles: true }
-                })
-                .then(async data => {
-                    const role = data?.roles.find(e => e.id.startsWith(`${guild.id}/`));
-                    if (role) {
-                        await edit_role(subject.id, guild.id, role.id, {
-                            name: `⭐${average.toFixed(1)} (${count_ui(count)})`
-                        });
-                    }
-                })
-            });
+            await remove_role(subject);
+            await give_role(subject);
         }
     }
     if (interaction.isButton()) {
@@ -154,7 +135,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                 }
                 await interaction.deferUpdate();
             })
-            .catch(err => console.log(err));
+            .catch(console.error);
         }
         if (interaction.customId.startsWith('hate')) {
             const id = parseInt(interaction.customId.split('#')[1]);
@@ -194,7 +175,7 @@ client.on("interactionCreate", async (interaction: Interaction): Promise<any> =>
                 }
                 await interaction.deferUpdate();
             })
-            .catch(err => console.log(err));
+            .catch(console.error);
         }
     }
 });

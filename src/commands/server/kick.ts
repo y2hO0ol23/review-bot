@@ -40,7 +40,7 @@ export default {
                     })
                     .then(async data => {
                         for (var e of data) {
-                            await interaction.guild.roles.fetch(e.id)
+                            await interaction.guild.roles.fetch(e.id.split('/')[1])
                             .then(async role => await role?.delete())
                             .catch(()=>{});
                         }
