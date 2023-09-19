@@ -13,7 +13,10 @@ export async function give_role(member: GuildMember|PartialGuildMember) {
         const rolename = `⭐${average.toFixed(1)}`
 
         await prisma.role.findMany({
-            where: { display: rolename }
+            where: { 
+                id: { startsWith: `${member.guild.id}/` },
+                display: rolename
+            }
         })
         .then(async data => {
             if (data.length) {
