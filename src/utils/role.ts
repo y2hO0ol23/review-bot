@@ -12,18 +12,18 @@ export async function give_role(member: GuildMember|PartialGuildMember) {
         const average = get_average(data);
         const rolename = `⭐${average.toFixed(1)}`
 
-        await prisma.role.findUnique({
+        await prisma.role.findMany({
             where: { display: rolename }
         })
         .then(async data => {
-            if (data) {
-                const role = await guild.roles.fetch(data.id.split('/')[1]);
+            if (data.length) {
+                const role = await guild.roles.fetch(data[0].id.split('/')[1]);
                 if (role) {
                     try {
                         await member.roles.add(role);
 
                         return await prisma.role.update({
-                            where: { id: `${data.id}` },
+                            where: { id: `${data[0].id}` },
                             data: {
                                 user: {
                                     connect: { id: member.id }
@@ -35,13 +35,13 @@ export async function give_role(member: GuildMember|PartialGuildMember) {
                         await prisma.user.findMany({
                             where: {
                                 roles: {
-                                    some: { id: `${data.id}` }
+                                    some: { id: `${data[0].id}` }
                                 }
                             }
                         })
                         .then(async users => {
                             await prisma.role.delete({
-                                where: { id: `${data.id}` }
+                                where: { id: `${data[0].id}` }
                             });
                             for (var user of users) {
                                 const member = await guild.members.fetch(user.id);
@@ -52,7 +52,7 @@ export async function give_role(member: GuildMember|PartialGuildMember) {
                 }
                 else {
                     await prisma.role.delete({
-                        where: { id: `${guild.id}/${data.id}` }
+                        where: { id: `${guild.id}/${data[0].id}` }
                     });
                 }
             }
