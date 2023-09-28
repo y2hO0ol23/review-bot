@@ -3,6 +3,11 @@ import { remove_role } from "@utils/role";
 import { client } from "src";
 
 client.on('guildMemberRemove', async member => {
-    if (member.id == client.user?.id) return;
-    await remove_role(member);
+    try {
+        if (member.id == client.user?.id) return;
+        await remove_role(member);
+    }
+    catch (e) {
+        console.error(e);
+    }
 })
